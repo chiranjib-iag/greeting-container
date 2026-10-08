@@ -3,6 +3,18 @@
 **This is a take-home task.** Please submit by the date given when the task was
 issued.
 
+## Submission details
+
+-   **Repository:** <https://github.com/chiranjib-iag/greeting-container>
+-   **Container image (public):** `ghcr.io/chiranjib-iag/sample-app:v1`
+-   **Registry:** GitHub Container Registry (`ghcr.io`)
+
+Pull the image without credentials:
+
+```bash
+docker pull ghcr.io/chiranjib-iag/sample-app:v1
+```
+
 ## Overview
 
 You are given a small web application (`app/`). A working `Dockerfile` is
