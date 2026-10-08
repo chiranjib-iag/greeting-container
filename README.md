@@ -69,6 +69,11 @@ The container start command is unchanged and still serves the app with
 
 ## Build and run locally
 
+> **Note:** The published image is built and pushed by the GitHub Actions
+> workflow (see [Continuous delivery](#continuous-delivery)), not from a local
+> machine. The commands in this section and the next are provided for reference
+> and local development.
+
 Build the image and tag it for GHCR (use a real version tag, not `:latest`):
 
 ```bash
