@@ -92,6 +92,23 @@ docker run --rm -p 9000:9000 -e PORT=9000 -e GREETING="Hi there" \
     ghcr.io/chiranjib-iag/sample-app:v1
 ```
 
+## Publishing manually
+
+The image is normally published by CI (see below), but it can also be pushed by
+hand. Log in once with a GitHub Personal Access Token that has the
+`write:packages` scope, then push the tagged image:
+
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u chiranjib-iag --password-stdin
+
+docker build -t ghcr.io/chiranjib-iag/sample-app:v1 .
+docker push ghcr.io/chiranjib-iag/sample-app:v1
+```
+
+After the first push, set the package visibility to public so it can be pulled
+without credentials: **GitHub → your profile → Packages → `sample-app` →
+Package settings → Change visibility → Public**.
+
 ## Continuous delivery
 
 A GitHub Actions workflow at `.github/workflows/docker-publish.yml` builds the
