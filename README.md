@@ -1,7 +1,12 @@
-# DevOps Interview Task (Part 1): Containerize
+# Greeting Container
 
-**This is a take-home task.** Please submit by the date given when the task was
-issued.
+A small Flask web application, containerised into a production-quality image and
+published to the GitHub Container Registry. This repository is my solution to
+the DevOps containerisation task: the provided `Dockerfile` has been refactored
+to follow container best practices, and the image is built and published
+automatically by a GitHub Actions workflow.
+
+The application code under `app/` is unchanged from the original.
 
 ## Submission details
 
@@ -15,45 +20,25 @@ Pull the image without credentials:
 docker pull ghcr.io/chiranjib-iag/sample-app:v1
 ```
 
-## Overview
+## The application
 
-You are given a small web application (`app/`). A working `Dockerfile` is
-provided, but it was written quickly and does **not** follow container best
-practices. Your job is to refactor it into a production-quality image and push
-it to a container registry.
-
-You do **not** need to modify the application code.
-
-## What we provide
-
-Clone this repository into your local account.
-
-> **Do Not** fork this repository. Clone it and re-push it into your local account.
-
-The following is provided as part of this repository:
-
-```text
-Dockerfile            # a working but non-production Dockerfile — improve it
-app/
-  app.py              # a minimal Python Flask web app (do not modify)
-  requirements.txt    # the app's dependencies (do not modify)
-```
-
-The application:
+The app is a minimal Flask service served by `gunicorn`:
 
 -   Listens on the port given by the `PORT` environment variable (default `8080`).
 -   Reads a `GREETING` environment variable used in its response.
 -   Exposes `GET /`, `GET /healthz`, and `GET /info`.
 
-## Container image
-
-The image is published to the GitHub Container Registry:
-
 ```text
-ghcr.io/chiranjib-iag/sample-app:v1
+Dockerfile            # production-quality multi-stage build
+.dockerignore         # trims the build context
+app/
+  app.py              # Flask application (unmodified)
+  requirements.txt    # pinned dependencies (unmodified)
+.github/workflows/
+  docker-publish.yml  # CI that builds, verifies, and publishes the image
 ```
 
-### Dockerfile design
+## Dockerfile design
 
 The `Dockerfile` uses a multi-stage build that follows container best practices:
 
@@ -79,20 +64,27 @@ The `Dockerfile` uses a multi-stage build that follows container best practices:
 The container start command is unchanged and still serves the app with
 `gunicorn`.
 
-## Build and run locally
+## How the image is published
 
-> **Note:** The published image is built and pushed by the GitHub Actions
-> workflow (see [Continuous delivery](#continuous-delivery)), not from a local
-> machine. The commands in this section and the next are provided for reference
-> and local development.
+The image is built and pushed automatically by a GitHub Actions workflow at
+`.github/workflows/docker-publish.yml`. On every push to `main`, on `v*` tags,
+and on manual dispatch, the workflow:
 
-Build the image and tag it for GHCR (use a real version tag, not `:latest`):
+1.  Builds the image from the `Dockerfile`.
+2.  Runs the container and verifies it answers on `/healthz` and runs as the
+    non-root `appuser`.
+3.  Pushes the image to GHCR tagged `v1` (plus a short-SHA tag).
 
-```bash
-docker build -t ghcr.io/chiranjib-iag/sample-app:v1 .
-```
+Publishing uses the built-in `GITHUB_TOKEN`, so no personal access token is
+required. After the first successful publish, the package visibility was set to
+**public** so the image can be pulled without credentials.
 
-Run the container and exercise the endpoints:
+## Running the image locally
+
+The commands below are for local development and verification; the published
+image itself is produced by CI (above), not from a local machine.
+
+Run the published image and exercise the endpoints:
 
 ```bash
 docker run --rm -p 8080:8080 ghcr.io/chiranjib-iag/sample-app:v1
@@ -109,11 +101,17 @@ docker run --rm -p 9000:9000 -e PORT=9000 -e GREETING="Hi there" \
     ghcr.io/chiranjib-iag/sample-app:v1
 ```
 
-## Publishing manually
+Build the image yourself from source (use a real version tag, not `:latest`):
 
-The image is normally published by CI (see below), but it can also be pushed by
-hand. Log in once with a GitHub Personal Access Token that has the
-`write:packages` scope, then push the tagged image:
+```bash
+docker build -t ghcr.io/chiranjib-iag/sample-app:v1 .
+```
+
+## Publishing manually (alternative to CI)
+
+Publishing is normally handled by the CI workflow, but the image can also be
+pushed by hand. Log in once with a GitHub Personal Access Token that has the
+`write:packages` scope, then build and push:
 
 ```bash
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u chiranjib-iag --password-stdin
@@ -122,23 +120,5 @@ docker build -t ghcr.io/chiranjib-iag/sample-app:v1 .
 docker push ghcr.io/chiranjib-iag/sample-app:v1
 ```
 
-After the first push, set the package visibility to public so it can be pulled
-without credentials: **GitHub → your profile → Packages → `sample-app` →
-Package settings → Change visibility → Public**.
-
-## Continuous delivery
-
-A GitHub Actions workflow at `.github/workflows/docker-publish.yml` builds the
-image, verifies that the container answers on `/healthz` and runs as a non-root
-user, and then pushes it to GHCR. It runs on every push to `main`, on `v*` tags,
-and on manual dispatch. Publishing uses the built-in `GITHUB_TOKEN`, so no
-personal access token is required.
-
-## Pulling the published image
-
-Once the package visibility is set to public, the image can be pulled without
-credentials:
-
-```bash
-docker pull ghcr.io/chiranjib-iag/sample-app:v1
-```
+Then set the package visibility to public: **GitHub → your profile → Packages →
+`sample-app` → Package settings → Change visibility → Public**.
