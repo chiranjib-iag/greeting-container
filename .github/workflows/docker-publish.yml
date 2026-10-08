@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    # Skip rebuilds for documentation-only changes.
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
   workflow_dispatch: {}
 
 env:
